@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UAF Aggregate Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+
+  :root{
+    --navy-900:#0A1F3D;
+    --navy-800:#0D2A52;
+    --navy-700:#153a6b;
+    --navy-500:#1F4E8C;
+    --navy-100:#E7EDF6;
+    --bg:#F4F6FA;
+    --surface:#FFFFFF;
+    --border:#DCE3EE;
+    --text:#101E33;
+    --text-muted:#5A6B85;
+    --wheat:#C79A3A;     
+    --wheat-soft:#F3E7C9;
+    --danger:#C0453D;
+    --danger-soft:#FBE9E7;
+    --success:#1E7A4C;
+    --success-soft:#E5F4EC;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:9px;
+    --shadow-sm:0 1px 2px rgba(10,31,61,0.06);
+    --shadow-md:0 8px 24px rgba(10,31,61,0.08);
+    --shadow-lg:0 24px 48px rgba(10,31,61,0.14);
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    background-image:
+      radial-gradient(circle at 100% 0%, rgba(31,78,140,0.06) 0%, transparent 45%),
+      radial-gradient(circle at 0% 100%, rgba(199,154,58,0.05) 0%, transparent 40%);
+    color:var(--text);
+    font-family:'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  h1,h2,h3,.display{font-family:'Manrope', sans-serif;}
+  .mono{font-family:'JetBrains Mono', monospace;}
+
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  
+  :focus-visible{
+    outline:3px solid var(--wheat);
+    outline-offset:2px;
+    border-radius:6px;
+  }
+
+  
+  header.site-header{
+    background:linear-gradient(135deg, var(--navy-900) 0%, var(--navy-700) 100%);
+    color:#fff;
+    padding:22px clamp(18px,4vw,48px);
+    box-shadow:var(--shadow-md);
+    position:relative;
+    z-index:5;
+  }
+  .header-inner{
+    max-width:1180px;
+    margin:0 auto;
+    display:flex;
+    align-items:center;
+    gap:18px;
+  }
+  .logo-slot{
+    flex:0 0 auto;
+    width:60px;
+    height:60px;
+    border-radius:14px;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.18);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  
+  .logo-slot img{
+    height:60px;
+    width:auto;
+    aspect-ratio:1/1;
+    object-fit:contain;
+    margin:auto;
+    display:block;
+  }
+  .logo-slot .logo-fallback{
+    font-family:'Manrope', sans-serif;
+    font-weight:800;
+    font-size:20px;
+    color:#fff;
+    letter-spacing:0.5px;
+  }
+  .header-text h1{
+    margin:0;
+    font-size:clamp(17px, 2.4vw, 23px);
+    font-weight:800;
+    letter-spacing:0.2px;
+  }
+  .header-text p{
+    margin:3px 0 0;
+    font-size:13px;
+    color:rgba(255,255,255,0.72);
+    font-weight:500;
+  }
+
+
+  main{
+    max-width:900px;
+    margin:0 auto;
+    padding:clamp(24px,5vw,56px) clamp(16px,4vw,24px) 80px;
+  }
+  .intro{
+    text-align:center;
+    margin-bottom:32px;
+    animation:fadeUp .6s var(--ease) both;
+  }
+  .intro .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-size:12.5px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--navy-500);
+    background:var(--navy-100);
+    padding:6px 14px;
+    border-radius:999px;
+    margin-bottom:14px;
+  }
+  .intro h2{
+    font-size:clamp(24px,4vw,34px);
+    margin:0 0 8px;
+    color:var(--navy-900);
+    font-weight:800;
+  }
+  .intro p{
+    color:var(--text-muted);
+    max-width:520px;
+    margin:0 auto;
+    font-size:15.5px;
+  }
+
+  /* ============ TABS ============ */
+  .tabs{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    background:var(--navy-100);
+    padding:6px;
+    border-radius:var(--radius-md);
+    max-width:560px;
+    margin:0 auto 28px;
+    animation:fadeUp .6s var(--ease) both;
+    animation-delay:.05s;
+  }
+  .tab-btn{
+    border:none;
+    background:transparent;
+    padding:13px 10px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:14px;
+    color:var(--navy-700);
+    cursor:pointer;
+    transition:background .25s var(--ease), color .25s var(--ease), box-shadow .25s var(--ease);
+  }
+  .tab-btn.active{
+    background:var(--surface);
+    color:var(--navy-900);
+    box-shadow:var(--shadow-sm);
+  }
+  .tab-btn:not(.active):hover{
+    background:rgba(255,255,255,0.5);
+  }
+
+  .panel{display:none; animation:fadeUp .45s var(--ease) both;}
+  .panel.active{display:block;}
+
+  /* ============ CARD ============ */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:clamp(20px,4vw,34px);
+    box-shadow:var(--shadow-md);
+  }
+  .card h3{
+    margin:0 0 4px;
+    font-size:18px;
+    color:var(--navy-900);
+  }
+  .card .card-sub{
+    margin:0 0 24px;
+    color:var(--text-muted);
+    font-size:13.5px;
+  }
+
+  .field-group{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:16px;
+    margin-bottom:18px;
+  }
+  @media (min-width:560px){
+    .field-row-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .field label{
+    font-size:13px;
+    font-weight:600;
+    color:var(--navy-800);
+  }
+  .field .hint{
+    font-size:11.5px;
+    color:var(--text-muted);
+    font-weight:500;
+  }
+  .field input{
+    border:1.5px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:12px 14px;
+    font-size:15px;
+    font-family:'Inter', sans-serif;
+    color:var(--text);
+    background:#FBFCFE;
+    transition:border-color .2s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease);
+  }
+  .field input::placeholder{color:#A9B5C7;}
+  .field input:hover{border-color:#B9C6DA;}
+  .field input:focus{
+    outline:none;
+    border-color:var(--navy-500);
+    box-shadow:0 0 0 4px rgba(31,78,140,0.12);
+    background:#fff;
+  }
+  .field input.invalid{
+    border-color:var(--danger);
+    box-shadow:0 0 0 4px rgba(192,69,61,0.1);
+  }
+  .field .error-msg{
+    font-size:11.5px;
+    color:var(--danger);
+    font-weight:600;
+    min-height:14px;
+    display:none;
+  }
+  .field .error-msg.show{display:block; animation:shakeIn .3s var(--ease);}
+
+  .divider-label{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--text-muted);
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    margin:22px 0 16px;
+  }
+  .divider-label::before,.divider-label::after{
+    content:'';
+    flex:1;
+    height:1px;
+    background:var(--border);
+  }
+
+  .primary-btn{
+    width:100%;
+    border:none;
+    background:linear-gradient(135deg, var(--navy-700), var(--navy-900));
+    color:#fff;
+    font-weight:700;
+    font-size:15.5px;
+    padding:15px 20px;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    box-shadow:0 8px 20px rgba(10,31,61,0.25);
+    transition:transform .2s var(--ease), box-shadow .2s var(--ease), filter .2s var(--ease);
+    margin-top:6px;
+  }
+  .primary-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 12px 26px rgba(10,31,61,0.32);
+    filter:brightness(1.06);
+  }
+  .primary-btn:active{transform:translateY(0px) scale(.99);}
+
+  /* ============ RESULT: CALCULATOR ============ */
+  .result-wrap{
+    margin-top:26px;
+    display:none;
+  }
+  .result-wrap.show{
+    display:block;
+    animation:fadeUp .5s var(--ease) both;
+  }
+  .result-card{
+    border-radius:var(--radius-lg);
+    padding:clamp(22px,4vw,32px);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    gap:14px;
+    border:1.5px solid var(--border);
+    background:var(--navy-100);
+    position:relative;
+    overflow:hidden;
+  }
+  .result-card.state-good{background:var(--success-soft); border-color:#c7e6d4;}
+  .result-card.state-bad{background:var(--danger-soft); border-color:#f2cfcb;}
+
+  .gauge-wrap{position:relative; width:190px; height:190px;}
+  .gauge-wrap svg{width:100%; height:100%; transform:rotate(-90deg);}
+  .gauge-track{fill:none; stroke:rgba(10,31,61,0.08); stroke-width:14;}
+  .gauge-progress{
+    fill:none;
+    stroke-width:14;
+    stroke-linecap:round;
+    transition:stroke-dashoffset 1.1s var(--ease), stroke .4s ease;
+  }
+  .gauge-center{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .gauge-number{
+    font-size:38px;
+    font-weight:700;
+    color:var(--navy-900);
+    letter-spacing:-0.5px;
+  }
+  .gauge-number small{font-size:19px; font-weight:600; opacity:.7;}
+  .gauge-caption{font-size:11px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.06em; margin-top:2px;}
+
+  .result-name{font-size:15px; font-weight:700; color:var(--navy-800);}
+  .result-message{
+    font-size:17px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .result-message .emoji{font-size:22px; animation:pop .5s var(--ease) .2s both;}
+  .breakdown{
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-top:6px;
+  }
+  .breakdown .item{
+    background:rgba(255,255,255,0.65);
+    border:1px solid rgba(10,31,61,0.08);
+    border-radius:var(--radius-sm);
+    padding:10px 8px;
+  }
+  .breakdown .item .val{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:15px; color:var(--navy-900);}
+  .breakdown .item .lbl{font-size:10.5px; color:var(--text-muted); font-weight:600; margin-top:2px; text-transform:uppercase; letter-spacing:0.03em;}
+
+  /* ============ RESULT: REVERSE ============ */
+  .reverse-result{
+    border-radius:var(--radius-lg);
+    padding:clamp(22px,4vw,30px);
+    border:1.5px solid var(--border);
+    background:var(--navy-100);
+    text-align:center;
+  }
+  .reverse-result.state-good{background:var(--success-soft); border-color:#c7e6d4;}
+  .reverse-result.state-bad{background:var(--danger-soft); border-color:#f2cfcb;}
+  .reverse-result.state-neutral{background:var(--wheat-soft); border-color:#e6d19c;}
+  .reverse-headline{
+    font-size:clamp(22px,4vw,30px);
+    font-weight:800;
+    color:var(--navy-900);
+    margin:6px 0 8px;
+  }
+  .reverse-sub{color:var(--text-muted); font-size:14px; max-width:420px; margin:0 auto;}
+  .reverse-icon{font-size:34px;}
+
+  /* ============ FOOTER ============ */
+  footer{
+    text-align:center;
+    padding:26px 16px 34px;
+    color:var(--text-muted);
+    font-size:12.5px;
+    border-top:1px solid var(--border);
+    background:var(--surface);
+  }
+  footer strong{color:var(--navy-800);}
+
+  /* ============ ANIMATIONS ============ */
+  @keyframes fadeUp{
+    from{opacity:0; transform:translateY(14px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  @keyframes pop{
+    0%{transform:scale(0.4); opacity:0;}
+    70%{transform:scale(1.15);}
+    100%{transform:scale(1); opacity:1;}
+  }
+  @keyframes shakeIn{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-3px);}
+    75%{transform:translateX(3px);}
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo-slot" aria-hidden="false">
+      <!--
+        UAF LOGO — swap the src attribute below with the real crest file
+        (e.g. "uaf-logo.png" or a hosted URL). Keep the img tag as-is;
+        height:60px and aspect-ratio are preserved automatically by CSS.
+        If the image fails to load, the text fallback next to it hides.
+      -->
+      <img src="/logo.gif" alt="University of Agriculture, Faisalabad logo"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <span class="logo-fallback" style="display:none;">UAF</span>
+    </div>
+    <div class="header-text">
+      <h1>University of Agriculture, Faisalabad</h1>
+      <p>Merit Aggregate Calculator &amp; Entry Test Target Predictor</p>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="intro">
+    <span class="eyebrow">🌾 Undergraduate Admissions Tool</span>
+    <h2>Know your aggregate before you apply.</h2>
+    <p>Enter your Matric, Intermediate Part&nbsp;1, and Entry Test marks to see your exact UAF merit aggregate — or work backwards to find the score you still need.</p>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab-btn active" role="tab" aria-selected="true" id="tabBtnCalc" onclick="switchTab('calc')">🧮 Calculate My Aggregate</button>
+    <button class="tab-btn" role="tab" aria-selected="false" id="tabBtnReverse" onclick="switchTab('reverse')">🎯 Find My Required Score</button>
+  </div>
+
+  <!-- ================= PANEL A: AGGREGATE CALCULATOR ================= -->
+  <section class="panel active" id="panel-calc">
+    <div class="card">
+      <h3>Aggregate Calculator</h3>
+      <p class="card-sub">Formula: 10th (30%) + Intermediate Part 1 (30%) + Entry Test (40%)</p>
+
+      <form id="calcForm" novalidate>
+        <div class="field-group">
+          <div class="field">
+            <label for="calcName">Full Name</label>
+            <input type="text" id="calcName" placeholder="e.g. Muhammad Awais" required>
+            <span class="error-msg" id="err-calcName">Please enter your full name.</span>
+          </div>
+        </div>
+
+        <div class="divider-label">10th / Matric Marks</div>
+        <div class="field-row-2">
+          <div class="field">
+            <label for="calcMatricObt">Obtained Marks</label>
+            <input type="number" id="calcMatricObt" min="0" placeholder="e.g. 950" required>
+            <span class="error-msg" id="err-calcMatricObt">Enter valid obtained marks.</span>
+          </div>
+          <div class="field">
+            <label for="calcMatricTotal">Total Marks</label>
+            <input type="number" id="calcMatricTotal" min="1" placeholder="e.g. 1100" required>
+            <span class="error-msg" id="err-calcMatricTotal">Enter valid total marks.</span>
+          </div>
+        </div>
+
+        <div class="divider-label">Intermediate Part 1 Marks</div>
+        <div class="field-row-2">
+          <div class="field">
+            <label for="calcFscObt">Obtained Marks</label>
+            <input type="number" id="calcFscObt" min="0" placeholder="e.g. 480" required>
+            <span class="error-msg" id="err-calcFscObt">Enter valid obtained marks.</span>
+          </div>
+          <div class="field">
+            <label for="calcFscTotal">Total Marks</label>
+            <input type="number" id="calcFscTotal" min="1" placeholder="e.g. 550" required>
+            <span class="error-msg" id="err-calcFscTotal">Enter valid total marks.</span>
+          </div>
+        </div>
+
+        <div class="divider-label">UAF Entry Test</div>
+        <div class="field-group">
+          <div class="field">
+            <label for="calcEntryTest">Marks Obtained (out of 100)</label>
+            <input type="number" id="calcEntryTest" min="0" max="100" placeholder="e.g. 72" required>
+            <span class="hint">Must be between 0 and 100.</span>
+            <span class="error-msg" id="err-calcEntryTest">Entry test marks must be between 0 and 100.</span>
+          </div>
+        </div>
+
+        <button type="submit" class="primary-btn">Calculate My Aggregate</button>
+      </form>
+
+      <div class="result-wrap" id="calcResultWrap">
+        <div class="result-card" id="calcResultCard">
+          <div class="gauge-wrap">
+            <svg viewBox="0 0 190 190">
+              <circle class="gauge-track" cx="95" cy="95" r="82"></circle>
+              <circle class="gauge-progress" id="gaugeProgress" cx="95" cy="95" r="82"
+                      stroke-dasharray="515.2" stroke-dashoffset="515.2" stroke="#1F4E8C"></circle>
+            </svg>
+            <div class="gauge-center">
+              <div class="gauge-number mono" id="gaugeNumber">0<small>%</small></div>
+              <div class="gauge-caption">Aggregate</div>
+            </div>
+          </div>
+          <div class="result-name" id="resultName"></div>
+          <div class="result-message" id="resultMessage"></div>
+          <div class="breakdown">
+            <div class="item">
+              <div class="val mono" id="bdMatric">0.0</div>
+              <div class="lbl">10th Weight</div>
+            </div>
+            <div class="item">
+              <div class="val mono" id="bdFsc">0.0</div>
+              <div class="lbl">Part 1 Weight</div>
+            </div>
+            <div class="item">
+              <div class="val mono" id="bdEntry">0.0</div>
+              <div class="lbl">Entry Test Weight</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PANEL B: REVERSE TARGET CALCULATOR ================= -->
+  <section class="panel" id="panel-reverse">
+    <div class="card">
+      <h3>Entry Test Score Predictor</h3>
+      <p class="card-sub">Find out exactly what you need to score on the Entry Test to hit your target aggregate.</p>
+
+      <form id="reverseForm" novalidate>
+        <div class="divider-label">10th / Matric Marks</div>
+        <div class="field-row-2">
+          <div class="field">
+            <label for="revMatricObt">Obtained Marks</label>
+            <input type="number" id="revMatricObt" min="0" placeholder="e.g. 950" required>
+            <span class="error-msg" id="err-revMatricObt">Enter valid obtained marks.</span>
+          </div>
+          <div class="field">
+            <label for="revMatricTotal">Total Marks</label>
+            <input type="number" id="revMatricTotal" min="1" placeholder="e.g. 1100" required>
+            <span class="error-msg" id="err-revMatricTotal">Enter valid total marks.</span>
+          </div>
+        </div>
+
+        <div class="divider-label">Intermediate Part 1 Marks</div>
+        <div class="field-row-2">
+          <div class="field">
+            <label for="revFscObt">Obtained Marks</label>
+            <input type="number" id="revFscObt" min="0" placeholder="e.g. 480" required>
+            <span class="error-msg" id="err-revFscObt">Enter valid obtained marks.</span>
+          </div>
+          <div class="field">
+            <label for="revFscTotal">Total Marks</label>
+            <input type="number" id="revFscTotal" min="1" placeholder="e.g. 550" required>
+            <span class="error-msg" id="err-revFscTotal">Enter valid total marks.</span>
+          </div>
+        </div>
+
+        <div class="divider-label">Your Goal</div>
+        <div class="field-group">
+          <div class="field">
+            <label for="revTarget">Target Aggregate (%)</label>
+            <input type="number" id="revTarget" min="0" max="100" step="0.01" placeholder="e.g. 75" required>
+            <span class="error-msg" id="err-revTarget">Enter a target between 0 and 100.</span>
+          </div>
+        </div>
+
+        <button type="submit" class="primary-btn">Find My Required Score</button>
+      </form>
+
+      <div class="result-wrap" id="reverseResultWrap">
+        <div class="reverse-result" id="reverseResultCard">
+          <div class="reverse-icon" id="reverseIcon">🎯</div>
+          <div class="reverse-headline" id="reverseHeadline"></div>
+          <div class="reverse-sub" id="reverseSub"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Created by <strong>Muhammad Awais</strong>, BS IT Student, UAF (5th Semester)
+</footer>
+
+<script>
+  /* ============ TAB SWITCHING ============ */
+  function switchTab(name){
+    const isCalc = name === 'calc';
+    document.getElementById('panel-calc').classList.toggle('active', isCalc);
+    document.getElementById('panel-reverse').classList.toggle('active', !isCalc);
+    document.getElementById('tabBtnCalc').classList.toggle('active', isCalc);
+    document.getElementById('tabBtnReverse').classList.toggle('active', !isCalc);
+    document.getElementById('tabBtnCalc').setAttribute('aria-selected', isCalc);
+    document.getElementById('tabBtnReverse').setAttribute('aria-selected', !isCalc);
+  }
+
+  /* ============ HELPERS ============ */
+  function showError(inputEl, errEl, show){
+    inputEl.classList.toggle('invalid', show);
+    errEl.classList.toggle('show', show);
+  }
+
+  function clampEntryTestInput(el){
+    el.addEventListener('input', () => {
+      let v = el.value;
+      if(v === '') return;
+      let num = parseFloat(v);
+      if(isNaN(num)) return;
+      if(num > 100){ el.value = 100; }
+      if(num < 0){ el.value = 0; }
+    });
+  }
+  clampEntryTestInput(document.getElementById('calcEntryTest'));
+  clampEntryTestInput(document.getElementById('revTarget'));
+
+  function animateNumber(el, from, to, duration, suffix){
+    const start = performance.now();
+    function tick(now){
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = (from + (to - from) * eased).toFixed(2);
+      el.innerHTML = current + (suffix || '');
+      if(progress < 1) requestAnimationFrame(tick);
+      else el.innerHTML = to.toFixed(2) + (suffix || '');
+    }
+    requestAnimationFrame(tick);
+  }
+
+  /* ============ FEATURE A: AGGREGATE CALCULATOR ============ */
+  const calcForm = document.getElementById('calcForm');
+  const CIRC = 2 * Math.PI * 82; // ~515.2
+
+  calcForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    let valid = true;
+
+    const name = document.getElementById('calcName');
+    const matricObt = document.getElementById('calcMatricObt');
+    const matricTotal = document.getElementById('calcMatricTotal');
+    const fscObt = document.getElementById('calcFscObt');
+    const fscTotal = document.getElementById('calcFscTotal');
+    const entryTest = document.getElementById('calcEntryTest');
+
+    // Validation
+    if(!name.value.trim()){ showError(name, document.getElementById('err-calcName'), true); valid = false; }
+    else showError(name, document.getElementById('err-calcName'), false);
+
+    const mObt = parseFloat(matricObt.value), mTot = parseFloat(matricTotal.value);
+    if(isNaN(mObt) || mObt < 0){ showError(matricObt, document.getElementById('err-calcMatricObt'), true); valid = false; }
+    else showError(matricObt, document.getElementById('err-calcMatricObt'), false);
+
+    if(isNaN(mTot) || mTot <= 0 || (!isNaN(mObt) && mObt > mTot)){ showError(matricTotal, document.getElementById('err-calcMatricTotal'), true); valid = false; }
+    else showError(matricTotal, document.getElementById('err-calcMatricTotal'), false);
+
+    const fObt = parseFloat(fscObt.value), fTot = parseFloat(fscTotal.value);
+    if(isNaN(fObt) || fObt < 0){ showError(fscObt, document.getElementById('err-calcFscObt'), true); valid = false; }
+    else showError(fscObt, document.getElementById('err-calcFscObt'), false);
+
+    if(isNaN(fTot) || fTot <= 0 || (!isNaN(fObt) && fObt > fTot)){ showError(fscTotal, document.getElementById('err-calcFscTotal'), true); valid = false; }
+    else showError(fscTotal, document.getElementById('err-calcFscTotal'), false);
+
+    const eTest = parseFloat(entryTest.value);
+    if(isNaN(eTest) || eTest < 0 || eTest > 100){ showError(entryTest, document.getElementById('err-calcEntryTest'), true); valid = false; }
+    else showError(entryTest, document.getElementById('err-calcEntryTest'), false);
+
+    if(!valid) return;
+
+    // Calculation
+    const matricWeight = (mObt / mTot) * 30;
+    const fscWeight = (fObt / fTot) * 30;
+    const entryWeight = (eTest / 100) * 40;
+    const aggregate = matricWeight + fscWeight + entryWeight;
+    const clampedAggregate = Math.max(0, Math.min(100, aggregate));
+
+    // Render
+    const wrap = document.getElementById('calcResultWrap');
+    const card = document.getElementById('calcResultCard');
+    const isGood = aggregate >= 60;
+
+    card.classList.remove('state-good','state-bad');
+    card.classList.add(isGood ? 'state-good' : 'state-bad');
+
+    document.getElementById('resultName').textContent = name.value.trim();
+
+    const msgEl = document.getElementById('resultMessage');
+    if(isGood){
+      msgEl.innerHTML = '<span class="emoji">🎉</span> Great job! You have a strong shot at UAF admission. <span class="emoji">🥳</span>';
+      msgEl.style.color = 'var(--success)';
+    } else {
+      msgEl.innerHTML = '<span class="emoji">😢</span> This aggregate is below the typical cutoff — but there\'s still time to improve.';
+      msgEl.style.color = 'var(--danger)';
+    }
+
+    document.getElementById('bdMatric').textContent = matricWeight.toFixed(2);
+    document.getElementById('bdFsc').textContent = fscWeight.toFixed(2);
+    document.getElementById('bdEntry').textContent = entryWeight.toFixed(2);
+
+    // Gauge animation
+    const gaugeProgress = document.getElementById('gaugeProgress');
+    const offset = CIRC - (clampedAggregate / 100) * CIRC;
+    gaugeProgress.setAttribute('stroke', isGood ? '#1E7A4C' : '#C0453D');
+    // Reset then animate
+    gaugeProgress.style.strokeDashoffset = CIRC;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        gaugeProgress.style.strokeDashoffset = offset;
+      });
+    });
+
+    const gaugeNumberEl = document.getElementById('gaugeNumber');
+    animateNumber({ set innerHTML(v){ gaugeNumberEl.innerHTML = v + '<small>%</small>'; } }, 0, clampedAggregate, 1100, '');
+
+    wrap.classList.remove('show');
+    void wrap.offsetWidth; // restart animation
+    wrap.classList.add('show');
+    wrap.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  });
+
+  /* ============ FEATURE B: REVERSE TARGET CALCULATOR ============ */
+  const reverseForm = document.getElementById('reverseForm');
+
+  reverseForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    let valid = true;
+
+    const matricObt = document.getElementById('revMatricObt');
+    const matricTotal = document.getElementById('revMatricTotal');
+    const fscObt = document.getElementById('revFscObt');
+    const fscTotal = document.getElementById('revFscTotal');
+    const target = document.getElementById('revTarget');
+
+    const mObt = parseFloat(matricObt.value), mTot = parseFloat(matricTotal.value);
+    if(isNaN(mObt) || mObt < 0){ showError(matricObt, document.getElementById('err-revMatricObt'), true); valid = false; }
+    else showError(matricObt, document.getElementById('err-revMatricObt'), false);
+
+    if(isNaN(mTot) || mTot <= 0 || (!isNaN(mObt) && mObt > mTot)){ showError(matricTotal, document.getElementById('err-revMatricTotal'), true); valid = false; }
+    else showError(matricTotal, document.getElementById('err-revMatricTotal'), false);
+
+    const fObt = parseFloat(fscObt.value), fTot = parseFloat(fscTotal.value);
+    if(isNaN(fObt) || fObt < 0){ showError(fscObt, document.getElementById('err-revFscObt'), true); valid = false; }
+    else showError(fscObt, document.getElementById('err-revFscObt'), false);
+
+    if(isNaN(fTot) || fTot <= 0 || (!isNaN(fObt) && fObt > fTot)){ showError(fscTotal, document.getElementById('err-revFscTotal'), true); valid = false; }
+    else showError(fscTotal, document.getElementById('err-revFscTotal'), false);
+
+    const targetVal = parseFloat(target.value);
+    if(isNaN(targetVal) || targetVal < 0 || targetVal > 100){ showError(target, document.getElementById('err-revTarget'), true); valid = false; }
+    else showError(target, document.getElementById('err-revTarget'), false);
+
+    if(!valid) return;
+
+    const matricWeight = (mObt / mTot) * 30;
+    const fscWeight = (fObt / fTot) * 30;
+    const neededRaw = ((targetVal - (matricWeight + fscWeight)) / 40) * 100;
+
+    const wrap = document.getElementById('reverseResultWrap');
+    const card = document.getElementById('reverseResultCard');
+    const icon = document.getElementById('reverseIcon');
+    const headline = document.getElementById('reverseHeadline');
+    const sub = document.getElementById('reverseSub');
+
+    card.classList.remove('state-good','state-bad','state-neutral');
+
+    if(neededRaw > 100){
+      card.classList.add('state-bad');
+      icon.textContent = '⚠️';
+      headline.textContent = 'This target isn\'t mathematically possible.';
+      sub.textContent = 'This target aggregate is mathematically impossible based on your academic record (requires more than 100 marks in the Entry Test). Consider a slightly lower target.';
+    } else if(neededRaw < 0){
+      card.classList.add('state-good');
+      icon.textContent = '✅';
+      headline.textContent = 'You\'ve already hit this target!';
+      sub.textContent = 'Based on your Matric and Intermediate Part 1 marks alone, you\'ve already achieved this aggregate. You need 0 marks in the Entry Test to meet it.';
+    } else {
+      card.classList.add('state-neutral');
+      icon.textContent = '🎯';
+      headline.innerHTML = 'You need <span class="mono">' + neededRaw.toFixed(2) + '</span> / 100 in the Entry Test.';
+      sub.textContent = 'That\'s the exact score required on the UAF Entry Test to reach your target aggregate of ' + targetVal.toFixed(2) + '%.';
+    }
+
+    wrap.classList.remove('show');
+    void wrap.offsetWidth;
+    wrap.classList.add('show');
+    wrap.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  });
+</script>
+
+</body>
+</html>
