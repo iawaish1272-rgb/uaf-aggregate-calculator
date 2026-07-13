@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-
+  /* ============ DESIGN TOKENS ============ */
   :root{
     --navy-900:#0A1F3D;
     --navy-800:#0D2A52;
@@ -20,7 +20,7 @@
     --border:#DCE3EE;
     --text:#101E33;
     --text-muted:#5A6B85;
-    --wheat:#C79A3A;     
+    --wheat:#C79A3A;      /* agriculture-nod accent, used sparingly */
     --wheat-soft:#F3E7C9;
     --danger:#C0453D;
     --danger-soft:#FBE9E7;
@@ -54,19 +54,19 @@
   a{color:inherit;}
   button{font-family:inherit;}
 
-  
+  /* Respect reduced motion */
   @media (prefers-reduced-motion: reduce){
     *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
   }
 
-  
+  /* Visible keyboard focus, no custom cursor styling anywhere */
   :focus-visible{
     outline:3px solid var(--wheat);
     outline-offset:2px;
     border-radius:6px;
   }
 
-  
+  /* ============ HEADER ============ */
   header.site-header{
     background:linear-gradient(135deg, var(--navy-900) 0%, var(--navy-700) 100%);
     color:#fff;
@@ -94,7 +94,12 @@
     justify-content:center;
     overflow:hidden;
   }
-  
+  /*
+    LOGO SLOT — replace the src below with the real UAF crest.
+    Recommended: a transparent PNG/SVG of the official logo.
+    Sizing (height:60px, width:auto, aspect-ratio preserved) is already
+    handled by the .logo-slot img rule — just swap the "src" attribute.
+  */
   .logo-slot img{
     height:60px;
     width:auto;
@@ -123,7 +128,7 @@
     font-weight:500;
   }
 
-
+  /* ============ LAYOUT ============ */
   main{
     max-width:900px;
     margin:0 auto;
@@ -445,7 +450,7 @@
         height:60px and aspect-ratio are preserved automatically by CSS.
         If the image fails to load, the text fallback next to it hides.
       -->
-      <img src="/logo.gif" alt="University of Agriculture, Faisalabad logo"
+      <img src="uaf-logo.png" alt="University of Agriculture, Faisalabad logo"
            onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
       <span class="logo-fallback" style="display:none;">UAF</span>
     </div>
@@ -459,7 +464,7 @@
 <main>
   <div class="intro">
     <span class="eyebrow">🌾 Undergraduate Admissions Tool</span>
-    <h2>Precise aggregate calculation adhering strictly to the official UAF merit formulation rules.</h2>
+    <h2>Know your aggregate before you apply.</h2>
     <p>Enter your Matric, Intermediate Part&nbsp;1, and Entry Test marks to see your exact UAF merit aggregate — or work backwards to find the score you still need.</p>
   </div>
 
@@ -621,6 +626,19 @@
 </footer>
 
 <script>
+  /* ============ BACKEND CONNECTION ============ */
+  /* Replace with your real Railway backend URL after deploying aggregate-backend/ */
+  const API_BASE = "https://YOUR-BACKEND-URL.up.railway.app";
+
+  function saveSubmission(payload){
+    // Fire-and-forget: never blocks or breaks the calculator if this fails
+    fetch(API_BASE + "/api/submissions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }).catch(() => { /* silently ignore network errors */ });
+  }
+
   /* ============ TAB SWITCHING ============ */
   function switchTab(name){
     const isCalc = name === 'calc';
@@ -752,6 +770,17 @@
     void wrap.offsetWidth; // restart animation
     wrap.classList.add('show');
     wrap.scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+    saveSubmission({
+      type: 'calculator',
+      name: name.value.trim(),
+      matricObtained: mObt,
+      matricTotal: mTot,
+      fscObtained: fObt,
+      fscTotal: fTot,
+      entryTest: eTest,
+      aggregate: aggregate
+    });
   });
 
   /* ============ FEATURE B: REVERSE TARGET CALCULATOR ============ */
@@ -820,7 +849,18 @@
     void wrap.offsetWidth;
     wrap.classList.add('show');
     wrap.scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+    saveSubmission({
+      type: 'reverse',
+      matricObtained: mObt,
+      matricTotal: mTot,
+      fscObtained: fObt,
+      fscTotal: fTot,
+      targetAggregate: targetVal,
+      requiredEntryTest: neededRaw
+    });
   });
+
 </script>
 
 </body>

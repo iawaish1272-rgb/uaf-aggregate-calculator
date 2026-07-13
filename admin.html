@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — UAF Aggregate Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-900:#0A1F3D; --navy-800:#0D2A52; --navy-700:#153a6b; --navy-500:#1F4E8C; --navy-100:#E7EDF6;
+    --bg:#F4F6FA; --surface:#FFFFFF; --border:#DCE3EE; --text:#101E33; --text-muted:#5A6B85;
+    --wheat:#C79A3A; --danger:#C0453D; --danger-soft:#FBE9E7; --success:#1E7A4C; --success-soft:#E5F4EC;
+    --radius-lg:18px; --radius-md:12px; --radius-sm:8px;
+    --shadow-md:0 8px 24px rgba(10,31,61,0.08);
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Inter', system-ui, sans-serif; -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:'Manrope', sans-serif;}
+  .mono{font-family:'JetBrains Mono', monospace;}
+  :focus-visible{outline:3px solid var(--wheat); outline-offset:2px; border-radius:6px;}
+
+  /* ---------- LOGIN GATE ---------- */
+  #loginScreen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+    background:linear-gradient(135deg, var(--navy-900), var(--navy-700));
+  }
+  .login-card{
+    background:var(--surface); border-radius:var(--radius-lg); padding:36px 32px;
+    width:100%; max-width:380px; box-shadow:0 24px 60px rgba(0,0,0,0.3);
+    text-align:center; animation:fadeUp .5s var(--ease) both;
+  }
+  .login-card .icon{font-size:34px; margin-bottom:6px;}
+  .login-card h2{margin:0 0 6px; color:var(--navy-900); font-size:20px;}
+  .login-card p{margin:0 0 22px; color:var(--text-muted); font-size:13.5px;}
+  .login-card input{
+    width:100%; border:1.5px solid var(--border); border-radius:var(--radius-sm);
+    padding:13px 14px; font-size:16px; text-align:center; letter-spacing:2px;
+    font-family:'JetBrains Mono', monospace; margin-bottom:12px;
+  }
+  .login-card input:focus{outline:none; border-color:var(--navy-500); box-shadow:0 0 0 4px rgba(31,78,140,0.12);}
+  .login-card button{
+    width:100%; border:none; background:linear-gradient(135deg, var(--navy-700), var(--navy-900));
+    color:#fff; font-weight:700; font-size:15px; padding:13px; border-radius:var(--radius-sm);
+    cursor:pointer; transition:transform .2s var(--ease), filter .2s var(--ease);
+  }
+  .login-card button:hover{transform:translateY(-2px); filter:brightness(1.06);}
+  .login-error{color:var(--danger); font-size:12.5px; font-weight:600; margin-top:10px; min-height:14px;}
+
+  /* ---------- DASHBOARD ---------- */
+  #dashboard{display:none;}
+  header.admin-header{
+    background:linear-gradient(135deg, var(--navy-900), var(--navy-700));
+    color:#fff; padding:20px clamp(16px,4vw,40px);
+  }
+  .admin-header-inner{
+    max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+  }
+  .admin-header-inner h1{margin:0; font-size:19px; font-weight:800;}
+  .admin-header-inner p{margin:2px 0 0; font-size:12.5px; color:rgba(255,255,255,0.7);}
+  .logout-btn{
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.25); color:#fff;
+    padding:9px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;
+    transition:background .2s var(--ease);
+  }
+  .logout-btn:hover{background:rgba(255,255,255,0.2);}
+
+  main{max-width:1200px; margin:0 auto; padding:28px 16px 60px;}
+
+  .stats-grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:14px; margin-bottom:26px;
+  }
+  .stat-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md);
+    padding:18px; box-shadow:var(--shadow-md);
+  }
+  .stat-card .val{font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; color:var(--navy-900);}
+  .stat-card .lbl{font-size:12px; color:var(--text-muted); font-weight:600; margin-top:4px;}
+
+  .toolbar{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px;
+  }
+  .toolbar input, .toolbar select{
+    border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px;
+    font-size:13.5px; font-family:'Inter',sans-serif; background:var(--surface);
+  }
+  .toolbar input:focus, .toolbar select:focus{outline:none; border-color:var(--navy-500);}
+  .toolbar .refresh-btn{
+    border:none; background:var(--navy-800); color:#fff; padding:10px 16px; border-radius:var(--radius-sm);
+    font-weight:600; font-size:13px; cursor:pointer;
+  }
+
+  .table-wrap{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md);
+    overflow-x:auto; box-shadow:var(--shadow-md);
+  }
+  table{width:100%; border-collapse:collapse; min-width:820px;}
+  thead th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.04em;
+    color:var(--text-muted); font-weight:700; padding:12px 14px; border-bottom:1.5px solid var(--border);
+    background:var(--navy-100);
+  }
+  tbody td{padding:12px 14px; font-size:13.5px; border-bottom:1px solid var(--border); white-space:nowrap;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#FAFBFD;}
+  .badge{
+    display:inline-block; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:700;
+  }
+  .badge.calc{background:var(--navy-100); color:var(--navy-700);}
+  .badge.reverse{background:#F3E7C9; color:#8a6a1f;}
+  .agg-val{font-family:'JetBrains Mono',monospace; font-weight:700;}
+  .agg-val.good{color:var(--success);}
+  .agg-val.bad{color:var(--danger);}
+  .del-btn{
+    border:none; background:var(--danger-soft); color:var(--danger); padding:6px 11px; border-radius:7px;
+    font-size:12px; font-weight:700; cursor:pointer; transition:filter .15s;
+  }
+  .del-btn:hover{filter:brightness(0.95);}
+  .empty-state{padding:50px 20px; text-align:center; color:var(--text-muted); font-size:14px;}
+
+  @keyframes fadeUp{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN GATE ================= -->
+<div id="loginScreen">
+  <form class="login-card" id="loginForm">
+    <div class="icon">🔒</div>
+    <h2>Admin Access</h2>
+    <p>Enter the password to view calculator submissions.</p>
+    <input type="password" id="passwordInput" placeholder="••••••" inputmode="numeric" autocomplete="off" required>
+    <button type="submit">Unlock Dashboard</button>
+    <div class="login-error" id="loginError"></div>
+  </form>
+</div>
+
+<!-- ================= DASHBOARD ================= -->
+<div id="dashboard">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <div>
+        <h1>Aggregate Calculator — Admin</h1>
+        <p>All submissions saved by real visitors, permanently.</p>
+      </div>
+      <button class="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="toolbar">
+      <input type="text" id="searchInput" placeholder="Search by name..." oninput="renderTable()">
+      <select id="typeFilter" onchange="renderTable()">
+        <option value="all">All types</option>
+        <option value="calculator">Calculator</option>
+        <option value="reverse">Reverse target</option>
+      </select>
+      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Name</th>
+            <th>10th (Obt/Total)</th>
+            <th>Part 1 (Obt/Total)</th>
+            <th>Entry Test</th>
+            <th>Target %</th>
+            <th>Result</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none;">No submissions yet.</div>
+    </div>
+  </main>
+</div>
+
+<script>
+  /* Replace with your real Railway backend URL after deploying aggregate-backend/ */
+  const API_BASE = "https://YOUR-BACKEND-URL.up.railway.app";
+
+  let allSubmissions = [];
+  let currentPassword = sessionStorage.getItem('admin_password') || '';
+
+  const loginForm = document.getElementById('loginForm');
+  const loginError = document.getElementById('loginError');
+
+  if (currentPassword) {
+    tryLoad(currentPassword);
+  }
+
+  loginForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const pw = document.getElementById('passwordInput').value.trim();
+    tryLoad(pw);
+  });
+
+  function tryLoad(password){
+    loginError.textContent = '';
+    fetch(API_BASE + '/api/admin/submissions', {
+      headers: { 'x-admin-password': password }
+    })
+    .then(res => {
+      if (res.status === 401) throw new Error('WRONG_PASSWORD');
+      if (!res.ok) throw new Error('SERVER_ERROR');
+      return res.json();
+    })
+    .then(data => {
+      currentPassword = password;
+      sessionStorage.setItem('admin_password', password);
+      allSubmissions = data.submissions || [];
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      renderStats();
+      renderTable();
+    })
+    .catch(err => {
+      if (err.message === 'WRONG_PASSWORD') {
+        loginError.textContent = 'Incorrect password. Try again.';
+      } else {
+        loginError.textContent = 'Could not reach the server. Check API_BASE is set correctly.';
+      }
+      sessionStorage.removeItem('admin_password');
+    });
+  }
+
+  function logout(){
+    sessionStorage.removeItem('admin_password');
+    location.reload();
+  }
+
+  function loadData(){
+    if(currentPassword) tryLoad(currentPassword);
+  }
+
+  function renderStats(){
+    const total = allSubmissions.length;
+    const calcOnly = allSubmissions.filter(s => s.type === 'calculator');
+    const reverseOnly = allSubmissions.filter(s => s.type === 'reverse');
+    const avgAgg = calcOnly.length
+      ? (calcOnly.reduce((sum, s) => sum + (s.aggregate || 0), 0) / calcOnly.length).toFixed(2)
+      : '0.00';
+    const passCount = calcOnly.filter(s => (s.aggregate || 0) >= 60).length;
+    const passRate = calcOnly.length ? ((passCount / calcOnly.length) * 100).toFixed(1) : '0.0';
+
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card"><div class="val">${total}</div><div class="lbl">Total Submissions</div></div>
+      <div class="stat-card"><div class="val">${calcOnly.length}</div><div class="lbl">Aggregate Calculations</div></div>
+      <div class="stat-card"><div class="val">${reverseOnly.length}</div><div class="lbl">Reverse Lookups</div></div>
+      <div class="stat-card"><div class="val">${avgAgg}%</div><div class="lbl">Average Aggregate</div></div>
+      <div class="stat-card"><div class="val">${passRate}%</div><div class="lbl">Above 60% Cutoff</div></div>
+    `;
+  }
+
+  function renderTable(){
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const typeFilter = document.getElementById('typeFilter').value;
+
+    const filtered = allSubmissions.filter(s => {
+      const matchesType = typeFilter === 'all' || s.type === typeFilter;
+      const matchesSearch = !search || (s.name || '').toLowerCase().includes(search);
+      return matchesType && matchesSearch;
+    });
+
+    const tbody = document.getElementById('tableBody');
+    const emptyState = document.getElementById('emptyState');
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    tbody.innerHTML = filtered.map(s => {
+      const date = new Date(s.createdAt).toLocaleString();
+      const isCalc = s.type === 'calculator';
+      const resultVal = isCalc ? s.aggregate : s.requiredEntryTest;
+      const resultLabel = isCalc
+        ? `${(s.aggregate ?? 0).toFixed(2)}%`
+        : (s.requiredEntryTest > 100 ? 'Not possible' : s.requiredEntryTest < 0 ? 'Already met' : `${s.requiredEntryTest.toFixed(2)} needed`);
+      const resultClass = isCalc
+        ? ((s.aggregate ?? 0) >= 60 ? 'good' : 'bad')
+        : (s.requiredEntryTest >= 0 && s.requiredEntryTest <= 100 ? '' : (s.requiredEntryTest < 0 ? 'good' : 'bad'));
+
+      return `
+        <tr>
+          <td>${date}</td>
+          <td><span class="badge ${isCalc ? 'calc' : 'reverse'}">${isCalc ? 'Calculator' : 'Reverse'}</span></td>
+          <td>${isCalc ? (s.name || '—') : '—'}</td>
+          <td>${s.matricObtained ?? '—'} / ${s.matricTotal ?? '—'}</td>
+          <td>${s.fscObtained ?? '—'} / ${s.fscTotal ?? '—'}</td>
+          <td>${isCalc ? (s.entryTest ?? '—') : '—'}</td>
+          <td>${isCalc ? '—' : (s.targetAggregate ?? '—') + '%'}</td>
+          <td><span class="agg-val ${resultClass}">${resultLabel}</span></td>
+          <td><button class="del-btn" onclick="deleteSubmission('${s._id}')">Delete</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function deleteSubmission(id){
+    if (!confirm('Delete this submission permanently?')) return;
+    fetch(API_BASE + '/api/admin/submissions/' + id, {
+      method: 'DELETE',
+      headers: { 'x-admin-password': currentPassword }
+    })
+    .then(res => res.json())
+    .then(() => {
+      allSubmissions = allSubmissions.filter(s => s._id !== id);
+      renderStats();
+      renderTable();
+    })
+    .catch(() => alert('Failed to delete. Try refreshing.'));
+  }
+</script>
+
+</body>
+</html>
